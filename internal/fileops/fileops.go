@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
+	"strings"
+	"strconv"
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/jdelkins/pia-tools/internal/pia"
@@ -65,4 +67,36 @@ func CreateNetworkFile(tun *pia.Tunnel, output_path, template_path string) error
 	}
 
 	return nil
+}
+
+func CreateWgFile(tun *pia.Tunnel, output_path string) error {
+	f, err := os.Create(output_path)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	builder := strings.Builder{}
+
+	builder.WriteString("[Interface]\nAddress = ")
+	builder.WriteString(tun.PeerIp)
+	builder.WriteString("\nPrivateKey = ")
+	builder.WriteString(tun.PrivateKey)
+
+	for _, server := range tun.DnsServers {
+		builder.WriteString("\nDNS = ")
+		builder.WriteString(server)
+		break
+	}
+
+	builder.WriteString("\n\n[Peer]\nPersistentKeepalive = 25\nPublicKey = ")
+	builder.WriteString(tun.PublicKey)
+	builder.WriteString("\nAllowedIPs = 0.0.0.0/0\nEndpoint = ")
+	builder.WriteString(tun.ServerIp)
+	builder.WriteString(":")
+	builder.WriteString(strconv.Itoa(tun.ServerPort))
+
+	_, err = f.WriteString(builder.String())
+	return err
 }
