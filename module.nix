@@ -227,8 +227,7 @@ in
         EnvironmentFile = cfg.envFile;
         PassEnvironment = "PIA_USERNAME PIA_PASSWORD";
         ExecStart = ''${cfg.package}/bin/pia-setup-tunnel --wg-binary ${pkgs.wireguard-tools}/bin/wg --cachedir ${cfg.cacheDir} --region ${cfg.region} --ifname ${cfg.ifname}''
-          + ifNetdev ''--netdev-template "${cfg.netdevTemplateFile}" --netdev "${cacheNetdev}"''
-          + ifNetwork ''--network-template "${cfg.networkTemplateFile}" --network "${cacheNetwork}"''
+          + ifNetdev ''--netdev-template "${cfg.netdevTemplateFile}" --netdev "${cacheNetdev}" --network-template "${cfg.networkTemplateFile}" --network "${cacheNetwork}"''
           + ifWgConf ''--wg-conf "/etc/wireguard/${cfg.ifname}.conf"'';
         ExecStartPost = ifWgConf [
           ''+${pkgs.wireguard-tools}/bin/wg-quick up ${cfg.ifname}''
