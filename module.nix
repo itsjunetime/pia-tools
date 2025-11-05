@@ -169,9 +169,20 @@ in
       default = "/etc/systemd/network/40-${cfg.ifname}.network";
       example = "/etc/systemd/network/40-pia.network";
     };
+
+    wq-conf = mkOption {
+      description = "Enable this to crate a wg-quick config file at /etc/wireguard/${cfg.ifname}.conf";
+      type = types.bool;
+    };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = let
+    ensureBothNetFiles = lib.asserts.assertMsg
+      ((cfg.netdevFile == null) == (cfg.networkFile == null))
+      "You must set both `netdevFile` and `networkFile` or neither";
+    ifNetdev = v: lib.optionals (cfg.netdevFile != null) v;
+    ifWgConf = v: lib.optionals cfg.wq-conf v;
+  in lib.mkIf cfg.enable {
     users.users.pia = lib.mkIf (cfg.user == "pia") {
       description = "pia-tools system user account";
       isSystemUser = true;
@@ -192,6 +203,7 @@ in
       in
       {
         ${cfg.cacheDir} = mk "d" cfg.group;
+      } // ifNetdev {
         ${cfg.netdevFile} = mk "f" config.users.groups.systemd-network.name;
         ${cfg.networkFile} = mk "f" config.users.groups.systemd-network.name;
       };
@@ -204,17 +216,24 @@ in
       serviceConfig = {
         User = cfg.user;
         Type = "oneshot";
-        ReadWritePaths = lib.unique [
-          (builtins.dirOf cfg.netdevFile)
-          (builtins.dirOf cfg.networkFile)
-          cfg.cacheDir
-        ];
+        ReadWritePaths = lib.unique [ cfg.cacheDir ]
+          ++ ifNetdev [
+            (builtins.dirOf cfg.netdevFile)
+            (builtins.dirOf cfg.networkFile)
+          ]
+          ++ ifWgConf [ "/etc/wireguard/" ];
         ReadOnlyPaths = [ "/nix/store" ];
         # username and password are passed in via environment variables PIA_USERNAME and PIA_PASSWORD, respectively
         EnvironmentFile = cfg.envFile;
         PassEnvironment = "PIA_USERNAME PIA_PASSWORD";
-        ExecStart = ''${cfg.package}/bin/pia-setup-tunnel --wg-binary ${pkgs.wireguard-tools}/bin/wg --cachedir ${cfg.cacheDir} --region ${cfg.region} --ifname ${cfg.ifname} --netdev-template "${cfg.netdevTemplateFile}" --netdev "${cacheNetdev}" --network-template "${cfg.networkTemplateFile}" --network "${cacheNetwork}"'';
-        ExecStartPost = [
+        ExecStart = ''${cfg.package}/bin/pia-setup-tunnel --wg-binary ${pkgs.wireguard-tools}/bin/wg --cachedir ${cfg.cacheDir} --region ${cfg.region} --ifname ${cfg.ifname}''
+          + ifNetdev ''--netdev-template "${cfg.netdevTemplateFile}" --netdev "${cacheNetdev}"''
+          + ifNetwork ''--network-template "${cfg.networkTemplateFile}" --network "${cacheNetwork}"''
+          + ifWgConf ''--wg-conf "/etc/wireguard/${cfg.ifname}.conf"'';
+        ExecStartPost = ifWgConf [
+          ''+${pkgs.wireguard-tools}/bin/wg-quick up ${cfg.ifname}''
+        ]
+        ++ ifNetdev [
           ''+${pkgs.coreutils}/bin/install -o systemd-network -g systemd-network -m 0440 "${cacheNetdev}" "${cfg.netdevFile}"''
           ''+${pkgs.coreutils}/bin/install -o root -g root -m 0444 "${cacheNetwork}" "${cfg.networkFile}"''
           "+-${pkgs.iproute2}/bin/ip link set down dev ${cfg.ifname}"
