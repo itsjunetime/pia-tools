@@ -158,14 +158,14 @@ in
 
     netdevFile = mkOption {
       description = "systemd.netdev file path, specifying the location to install the generated netdev.";
-      type = types.path;
+      type = types.nullOr types.path;
       default = "/etc/systemd/network/10-${cfg.ifname}.netdev";
       example = "/etc/systemd/network/10-pia.netdev";
     };
 
     networkFile = mkOption {
       description = "systemd.network file path, specifying the location to install the generated network.";
-      type = types.path;
+      type = types.nullOr types.path;
       default = "/etc/systemd/network/40-${cfg.ifname}.network";
       example = "/etc/systemd/network/40-pia.network";
     };
