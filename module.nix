@@ -170,7 +170,7 @@ in
       example = "/etc/systemd/network/40-pia.network";
     };
 
-    wq-conf = mkOption {
+    wg-conf = mkOption {
       description = "Enable this to crate a wg-quick config file at /etc/wireguard/${cfg.ifname}.conf";
       type = types.bool;
     };
