@@ -158,14 +158,14 @@ in
 
     netdevFile = mkOption {
       description = "systemd.netdev file path, specifying the location to install the generated netdev.";
-      type = types.nullOr types.path;
+      type = types.path;
       default = "/etc/systemd/network/10-${cfg.ifname}.netdev";
       example = "/etc/systemd/network/10-pia.netdev";
     };
 
     networkFile = mkOption {
       description = "systemd.network file path, specifying the location to install the generated network.";
-      type = types.nullOr types.path;
+      type = types.path;
       default = "/etc/systemd/network/40-${cfg.ifname}.network";
       example = "/etc/systemd/network/40-pia.network";
     };
@@ -226,11 +226,22 @@ in
         # username and password are passed in via environment variables PIA_USERNAME and PIA_PASSWORD, respectively
         EnvironmentFile = cfg.envFile;
         PassEnvironment = "PIA_USERNAME PIA_PASSWORD";
-        ExecStart = ''${cfg.package}/bin/pia-setup-tunnel --wg-binary ${pkgs.wireguard-tools}/bin/wg --cachedir ${cfg.cacheDir} --region ${cfg.region} --ifname ${cfg.ifname}''
-          + lib.optionalString
-            (cfg.netdevFile != null)
-            '' --netdev-template "${cfg.netdevTemplateFile}" --netdev "${cacheNetdev}" --network-template "${cfg.networkTemplateFile}" --network "${cacheNetwork}"''
-          + lib.optionalString (cfg.wg-conf) '' --wg-conf "/etc/wireguard/${cfg.ifname}.conf"'';
+
+        ExecStart = lib.concatStringsSep " " (
+          [
+            ''${cfg.package}/bin/pia-setup-tunnel''
+              ''--wg-binary'' ''${pkgs.wireguard-tools}/bin/wg''
+              ''--cachedir'' ''${cfg.cacheDir}''
+              ''--region'' ''${cfg.region}''
+              ''--ifname'' ''${cfg.ifname}''
+              ''--netdev-template'' ''"${cfg.netdevTemplateFile}"''
+              ''--netdev'' ''"${cacheNetdev}"''
+              ''--network-template'' ''"${cfg.networkTemplateFile}"''
+              ''--network'' ''"${cacheNetwork}"''
+          ]
+          ++ lib.optionals (cfg.wg-conf) [''--wg-conf'' ''"/etc/wireguard/${cfg.ifname}.conf"'']
+        );
+
         ExecStartPost = ifWgConf ''+${pkgs.wireguard-tools}/bin/wg-quick up ${cfg.ifname}''
         ++ ifNetdev [
           ''+${pkgs.coreutils}/bin/install -o systemd-network -g systemd-network -m 0440 "${cacheNetdev}" "${cfg.netdevFile}"''

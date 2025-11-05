@@ -115,14 +115,19 @@ func main() {
 	}
 
 	// Finally, populate the templates
-	if err := fileops.CreateNetdevFile(tun, path_netdev, path_netdev_tmpl); err != nil {
-		log.Panicf("Could not create %s file: %v", path_netdev, err)
-	}
-	if err := fileops.CreateNetworkFile(tun, path_network, path_network_tmpl); err != nil {
-		log.Panicf("Could not create %s file: %v", path_network, err)
+	if len(path_netdev) > 0 {
+		if err := fileops.CreateNetdevFile(tun, path_netdev, path_netdev_tmpl); err != nil {
+			log.Panicf("Could not create %s file: %v", path_netdev, err)
+		}
 	}
 
-	if len(path_wg_conf) != 0 {
+	if len(path_network) > 0 {
+		if err := fileops.CreateNetworkFile(tun, path_network, path_network_tmpl); err != nil {
+			log.Panicf("Could not create %s file: %v", path_network, err)
+		}
+	}
+
+	if len(path_wg_conf) > 0 {
 		if err := fileops.CreateWgFile(tun, path_wg_conf); err != nil {
 			log.Panicf("Could not create wg.conf file: %v", err)
 		}
