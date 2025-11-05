@@ -253,10 +253,7 @@ in
           "+${pkgs.systemd}/bin/networkctl up ${cfg.ifname}"
         ]
         ++ lib.optional (cfg.whitelistSet != null) "+${whitelist-sh}"
-        ++ lib.optionals (cfg.portForwarding) [
-          "${pkgs.coreutils}/bin/sleep 10"
-          "${cfg.package}/bin/pia-portforward --cachedir ${cfg.cacheDir} --ifname ${cfg.ifname} ${cfg.rTorrentParams} ${cfg.transmissionParams}"
-        ];
+        ++ lib.optional (cfg.portForwarding) "${pkgs.systemd}/bin/systemctl restart ${cfg.refreshServiceName}";
       };
     };
 
