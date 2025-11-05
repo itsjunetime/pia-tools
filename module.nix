@@ -181,7 +181,7 @@ in
       ((cfg.netdevFile == null) == (cfg.networkFile == null))
       "You must set both `netdevFile` and `networkFile` or neither";
     ifNetdev = v: lib.optionals (cfg.netdevFile != null) v;
-    ifWgConf = v: lib.optionals cfg.wq-conf v;
+    ifWgConf = v: lib.optionals cfg.wg-conf v;
   in lib.mkIf cfg.enable {
     users.users.pia = lib.mkIf (cfg.user == "pia") {
       description = "pia-tools system user account";
