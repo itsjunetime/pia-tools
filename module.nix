@@ -178,9 +178,9 @@ in
 
   config = let
     ensureBothNetFiles = lib.asserts.assertMsg
-      ((cfg.netdevFile == null) == (cfg.networkFile == null))
+      ((cfg.netdevFile == "") == (cfg.networkFile == ""))
       "You must set both `netdevFile` and `networkFile` or neither";
-    ifNetdev = v: lib.optionals (cfg.netdevFile != null) v;
+    ifNetdev = v: lib.optionals (cfg.netdevFile != "") v;
     ifWgConf = v: lib.optional cfg.wg-conf v;
   in lib.mkIf cfg.enable {
     users.users.pia = lib.mkIf (cfg.user == "pia") {
@@ -203,7 +203,7 @@ in
       in
       {
         ${cfg.cacheDir} = mk "d" cfg.group;
-      } // lib.attrsets.optionalAttrs (cfg.netdevFile != null) {
+      } // lib.attrsets.optionalAttrs (cfg.netdevFile != "") {
         ${cfg.netdevFile} = mk "f" config.users.groups.systemd-network.name;
         ${cfg.networkFile} = mk "f" config.users.groups.systemd-network.name;
       };
