@@ -229,8 +229,8 @@ in
         ExecStart = ''${cfg.package}/bin/pia-setup-tunnel --wg-binary ${pkgs.wireguard-tools}/bin/wg --cachedir ${cfg.cacheDir} --region ${cfg.region} --ifname ${cfg.ifname}''
           + lib.optionalString
             (cfg.netdevFile != null)
-            ''--netdev-template "${cfg.netdevTemplateFile}" --netdev "${cacheNetdev}" --network-template "${cfg.networkTemplateFile}" --network "${cacheNetwork}"''
-          + ifWgConf ''--wg-conf "/etc/wireguard/${cfg.ifname}.conf"'';
+            '' --netdev-template "${cfg.netdevTemplateFile}" --netdev "${cacheNetdev}" --network-template "${cfg.networkTemplateFile}" --network "${cacheNetwork}"''
+          + ifWgConf '' --wg-conf "/etc/wireguard/${cfg.ifname}.conf"'';
         ExecStartPost = ifWgConf [
           ''+${pkgs.wireguard-tools}/bin/wg-quick up ${cfg.ifname}''
         ]
