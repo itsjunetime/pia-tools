@@ -181,7 +181,7 @@ in
       ((cfg.netdevFile == null) == (cfg.networkFile == null))
       "You must set both `netdevFile` and `networkFile` or neither";
     ifNetdev = v: lib.optionals (cfg.netdevFile != null) v;
-    ifWgConf = v: lib.optionals cfg.wg-conf v;
+    ifWgConf = v: lib.optional cfg.wg-conf v;
   in lib.mkIf cfg.enable {
     users.users.pia = lib.mkIf (cfg.user == "pia") {
       description = "pia-tools system user account";
@@ -221,7 +221,7 @@ in
             (builtins.dirOf cfg.netdevFile)
             (builtins.dirOf cfg.networkFile)
           ]
-          ++ ifWgConf [ "/etc/wireguard/" ];
+          ++ ifWgConf "/etc/wireguard/";
         ReadOnlyPaths = [ "/nix/store" ];
         # username and password are passed in via environment variables PIA_USERNAME and PIA_PASSWORD, respectively
         EnvironmentFile = cfg.envFile;
@@ -230,10 +230,8 @@ in
           + lib.optionalString
             (cfg.netdevFile != null)
             '' --netdev-template "${cfg.netdevTemplateFile}" --netdev "${cacheNetdev}" --network-template "${cfg.networkTemplateFile}" --network "${cacheNetwork}"''
-          + ifWgConf '' --wg-conf "/etc/wireguard/${cfg.ifname}.conf"'';
-        ExecStartPost = ifWgConf [
-          ''+${pkgs.wireguard-tools}/bin/wg-quick up ${cfg.ifname}''
-        ]
+          + lib.optionalString (cfg.wg-conf) '' --wg-conf "/etc/wireguard/${cfg.ifname}.conf"'';
+        ExecStartPost = ifWgConf ''+${pkgs.wireguard-tools}/bin/wg-quick up ${cfg.ifname}''
         ++ ifNetdev [
           ''+${pkgs.coreutils}/bin/install -o systemd-network -g systemd-network -m 0440 "${cacheNetdev}" "${cfg.netdevFile}"''
           ''+${pkgs.coreutils}/bin/install -o root -g root -m 0444 "${cacheNetwork}" "${cfg.networkFile}"''
