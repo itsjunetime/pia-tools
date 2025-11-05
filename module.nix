@@ -203,7 +203,7 @@ in
       in
       {
         ${cfg.cacheDir} = mk "d" cfg.group;
-      } // ifNetdev {
+      } // lib.attrsets.optionalAttrs (cfg.netdevFile != null) {
         ${cfg.netdevFile} = mk "f" config.users.groups.systemd-network.name;
         ${cfg.networkFile} = mk "f" config.users.groups.systemd-network.name;
       };
@@ -227,7 +227,9 @@ in
         EnvironmentFile = cfg.envFile;
         PassEnvironment = "PIA_USERNAME PIA_PASSWORD";
         ExecStart = ''${cfg.package}/bin/pia-setup-tunnel --wg-binary ${pkgs.wireguard-tools}/bin/wg --cachedir ${cfg.cacheDir} --region ${cfg.region} --ifname ${cfg.ifname}''
-          + ifNetdev ''--netdev-template "${cfg.netdevTemplateFile}" --netdev "${cacheNetdev}" --network-template "${cfg.networkTemplateFile}" --network "${cacheNetwork}"''
+          + lib.optionalString
+            (cfg.netdevFile != null)
+            ''--netdev-template "${cfg.netdevTemplateFile}" --netdev "${cacheNetdev}" --network-template "${cfg.networkTemplateFile}" --network "${cacheNetwork}"''
           + ifWgConf ''--wg-conf "/etc/wireguard/${cfg.ifname}.conf"'';
         ExecStartPost = ifWgConf [
           ''+${pkgs.wireguard-tools}/bin/wg-quick up ${cfg.ifname}''
@@ -241,9 +243,7 @@ in
           "+${pkgs.systemd}/bin/networkctl reconfigure ${cfg.ifname}"
           "+${pkgs.systemd}/bin/networkctl up ${cfg.ifname}"
         ]
-        ++ lib.optionals (cfg.whitelistSet != null) [
-          "+${whitelist-sh}"
-        ]
+        ++ lib.optional (cfg.whitelistSet != null) "+${whitelist-sh}"
         ++ lib.optionals (cfg.portForwarding) [
           "${pkgs.coreutils}/bin/sleep 10"
           "${cfg.package}/bin/pia-portforward --cachedir ${cfg.cacheDir} --ifname ${cfg.ifname} ${cfg.rTorrentParams} ${cfg.transmissionParams}"
