@@ -79,23 +79,23 @@ func CreateWgFile(tun *pia.Tunnel, output_path string) error {
 
 	builder := strings.Builder{}
 
-	builder.WriteString("[Interface]\nAddress = ")
+	builder.WriteString("\n[Interface]\nAddress = ")
 	builder.WriteString(tun.PeerIp)
 	builder.WriteString("\nPrivateKey = ")
-	builder.WriteString(tun.PrivateKey)
+	builder.WriteString(tun.PublicKey)
 
 	for _, server := range tun.DnsServers {
 		builder.WriteString("\nDNS = ")
 		builder.WriteString(server)
-		break
 	}
 
-	builder.WriteString("\n\n[Peer]\nPersistentKeepalive = 25\nPublicKey = ")
-	builder.WriteString(tun.PublicKey)
+	builder.WriteString("\n[Peer]\nPersistentKeepalive = 25\nPublicKey = ")
+	builder.WriteString(tun.PrivateKey)
 	builder.WriteString("\nAllowedIPs = 0.0.0.0/0\nEndpoint = ")
 	builder.WriteString(tun.ServerIp)
 	builder.WriteString(":")
 	builder.WriteString(strconv.Itoa(tun.ServerPort))
+	builder.WriteString("\n")
 
 	_, err = f.WriteString(builder.String())
 	return err

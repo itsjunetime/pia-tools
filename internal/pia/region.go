@@ -90,6 +90,20 @@ func RegionsWithPingTime() ([]Region, error) {
 		}
 		return regions[i].PingTime < regions[j].PingTime
 	})
+
+	/*
+	fmt.Println("servers and their pings:")
+	for _, r := range regions {
+		fmt.Printf("id: %s, name: %s, time: %s, servers:\n", r.Id, r.Name, r.PingTime)
+		for k, s := range r.Servers {
+			fmt.Printf("\tk %s:\n", k)
+			for _, s := range s {
+				fmt.Printf("\t\tip: %s\n", s.Ip)
+			}
+		}
+	}
+	*/
+
 	return regions, nil
 }
 

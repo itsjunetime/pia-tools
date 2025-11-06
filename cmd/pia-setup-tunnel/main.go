@@ -79,6 +79,7 @@ func main() {
 			if r.HasWg() && r.PortForward {
 				reg = r
 				fmt.Printf("Selected region %s (%s), having ping time %d ms\n", r.Id, r.Name, r.PingTime.Milliseconds())
+				fmt.Printf("Connecting to ip %s\n", r.WgServer().Ip)
 				break
 			}
 		}
@@ -92,6 +93,8 @@ func main() {
 			log.Panicf("%v", err)
 		}
 	}
+
+	fmt.Printf("reg is %s (%s)\n", reg.Id, reg.Name)
 
 	// Create a Tunnel struct and populate it with fresh WG keys and an access token
 	tun := pia.NewTunnel(reg, wg_if)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	// "net/url"
 	"time"
 )
 
@@ -17,6 +18,9 @@ func (t Token) Valid() bool {
 }
 
 func (tun *Tunnel) NewToken(username string, password string) error {
+	// resp, err := http.PostForm("https://privateinternetaccess.com/api/client/v2/token", url.Values{"username": {username}, "password": {password}})
+
+
 	url := fmt.Sprintf("https://%s/authv3/generateToken", tun.Region.MetaServer().Ip)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -33,6 +37,12 @@ func (tun *Tunnel) NewToken(username string, password string) error {
 	if err := json.NewDecoder(resp.Body).Decode(&vals); err != nil {
 		return err
 	}
+
+	fmt.Println("Token response is:")
+	for k, v := range vals {
+		fmt.Printf("%s = '%s'\n", k, v)
+	}
+
 	if vals["status"] != "OK" {
 		return fmt.Errorf("Error generating PIA token: status=\"%s\" message=\"%s\"", vals["status"], vals["message"])
 	}
