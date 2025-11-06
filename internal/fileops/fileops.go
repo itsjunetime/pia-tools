@@ -87,6 +87,7 @@ func CreateWgFile(tun *pia.Tunnel, output_path string) error {
 	for _, server := range tun.DnsServers {
 		builder.WriteString("\nDNS = ")
 		builder.WriteString(server)
+		break
 	}
 
 	builder.WriteString("\n[Peer]\nPersistentKeepalive = 25\nPublicKey = ")
